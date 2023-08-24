@@ -1,19 +1,35 @@
 {
-  "name": "peerjs",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "name": "chat",
+  "version": "1.0.21",
+  "author": "Valentin Giselbrecht",
+  "contributors": [],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vgiselbrecht/chat.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.18.2",
-    "http": "^0.0.1-security",
-    "simple-peer": "^9.11.1",
-    "socket.io": "^4.7.1"
+  "license": "Apache 2.0",
+  "devDependencies": {
+    "@types/jquery": "^3.5.14",
+    "@types/webrtc": "0.0.26",
+    "css-loader": "^5.2.7",
+    "emoji-picker-element": "^1.14.1",
+    "file-loader": "^6.2.0",
+    "glob-parent": "^6.0.2",
+    "grunt": "^1.5.3",
+    "grunt-contrib-clean": "^2.0.1",
+    "grunt-contrib-watch": "~1.1.0",
+    "grunt-replace": "^2.0.2",
+    "grunt-webpack": "^4.0.3",
+    "hosted-git-info": "^4.1.0",
+    "lodash": ">=4.17.21",
+    "minimist": "^1.2.7",
+    "postcss": "^8.4.20",
+    "sass": "^1.57.1",
+    "sass-loader": "^10.4.1",
+    "style-loader": "^2.0.0",
+    "ts-loader": "^8.4.0",
+    "typescript": "^4.9.4",
+    "url-loader": "^4.1.1",
+    "webpack": "^5.75.0"
   }
 }
