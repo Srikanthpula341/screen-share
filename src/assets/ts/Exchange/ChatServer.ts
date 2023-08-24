@@ -24,7 +24,7 @@ export class ChatServer implements IExchange{
         const stagingApiUrl = 'https://staging.bterai.com';
         const localApiUrl = 'http://127.0.0.1:4000';
     
-        this.socket = io(localApiUrl, {
+        this.socket = io(stagingApiUrl, {
             auth: {
                 apiKey: "Video_call"
             }
