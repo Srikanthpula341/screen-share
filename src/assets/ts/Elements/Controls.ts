@@ -83,6 +83,17 @@ export class Controls{
                             cla.app.screen.startScreen();
                         }
                     }
+                },
+                toogleScreenRecord:function(){
+                    if (cla.app.screenRecording) {
+                        // Stop screen recording
+                        cla.app.stopScreenRecording();
+                    } else {
+                        // Start screen recording
+                        cla.app.startScreenRecording();
+                    }
+                
+
                 }
                 ,toogleOption: function(){
                     this.optionOn = !this.optionOn;

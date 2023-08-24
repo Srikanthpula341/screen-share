@@ -34,6 +34,7 @@ import { Settings } from "./Utils/Settings";
 import { ChatServer } from "./Exchange/ChatServer";
 
 export class App{
+ 
 
     room: string;
     yourId: number = Math.floor(Math.random()*1000000000);
@@ -66,6 +67,9 @@ export class App{
     stateIsSet: boolean = false;
     yourVideoElement: Video;
     partnerListElement: PartnerListElement;
+    // screenRecording: boolean = false;
+  screenRecorder: MediaRecorder | null = null;
+     screenRecording: MediaStream | null = null;
 
     constructor(){
         this.yourVideo = document.getElementById("yourVideo");
@@ -427,6 +431,53 @@ export class App{
             app.videogrid.recalculateLayout();
         });
     }
+
+    //screen record
+
+    startScreenRecording() {
+        console.log('"object" :>> ', "object");
+        if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+            navigator.mediaDevices.getDisplayMedia({ video: true })
+                .then((stream: MediaStream) => {
+                    this.screenRecording = stream;
+                    this.screenRecorder = new MediaRecorder(stream);
+                    const chunks: BlobPart[] = [];
+
+                    this.screenRecorder.ondataavailable = (event: BlobEvent) => {
+                        if (event.data.size > 0) {
+                            chunks.push(event.data);
+                        }
+                    };
+
+                    this.screenRecorder.onstop = () => {
+                        const blob = new Blob(chunks, { type: 'video/webm' });
+                        const url = URL.createObjectURL(blob);
+
+                        const videoElement = document.createElement('video');
+                        videoElement.src = url;
+                        videoElement.controls = true;
+                        document.body.appendChild(videoElement);
+                    };
+
+                    this.screenRecorder.start();
+                })
+                .catch((error: any) => {
+                    console.error('Error starting screen recording:', error);
+                });
+        } else {
+            console.error('Screen recording is not supported in this browser.');
+        }
+    }
+
+    stopScreenRecording() {
+        if (this.screenRecorder) {
+            this.screenRecorder.stop();
+            if (this.screenRecording) {
+                this.screenRecording.getTracks().forEach(track => track.stop());
+            }
+        }
+    } 
+    
 
     handleMouseMove(event) {
         const eventData = {

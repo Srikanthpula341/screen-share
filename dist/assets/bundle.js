@@ -911,6 +911,16 @@ class Controls {
                         }
                     }
                 },
+                toogleScreenRecord: function () {
+                    if (cla.app.screenRecording) {
+                        // Stop screen recording
+                        cla.app.stopScreenRecording();
+                    }
+                    else {
+                        // Start screen recording
+                        cla.app.startScreenRecording();
+                    }
+                },
                 toogleOption: function () {
                     this.optionOn = !this.optionOn;
                     cla.toogleOption();
@@ -2330,7 +2340,7 @@ class ChatServer {
     connectToServer() {
         const stagingApiUrl = 'https://staging.bterai.com';
         const localApiUrl = 'http://127.0.0.1:4000';
-        this.socket = io(localApiUrl, {
+        this.socket = io(stagingApiUrl, {
             auth: {
                 apiKey: "Video_call"
             }
@@ -6963,6 +6973,9 @@ class App {
         this.called = false;
         this.readyToCall = false;
         this.stateIsSet = false;
+        // screenRecording: boolean = false;
+        this.screenRecorder = null;
+        this.screenRecording = null;
         this.yourVideo = document.getElementById("yourVideo");
         this.yourVideoElement = new _Elements_Video__WEBPACK_IMPORTED_MODULE_9__.Video(document.getElementById("yourVideoArea"), null);
         this.partnerListElement = new _Elements_PartnerListElement__WEBPACK_IMPORTED_MODULE_10__.PartnerListElement(null);
@@ -7299,6 +7312,46 @@ class App {
         $(app.yourVideo).on("loadeddata", function () {
             app.videogrid.recalculateLayout();
         });
+    }
+    //screen record
+    startScreenRecording() {
+        console.log('"object" :>> ', "object");
+        if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+            navigator.mediaDevices.getDisplayMedia({ video: true })
+                .then((stream) => {
+                this.screenRecording = stream;
+                this.screenRecorder = new MediaRecorder(stream);
+                const chunks = [];
+                this.screenRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        chunks.push(event.data);
+                    }
+                };
+                this.screenRecorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    const videoElement = document.createElement('video');
+                    videoElement.src = url;
+                    videoElement.controls = true;
+                    document.body.appendChild(videoElement);
+                };
+                this.screenRecorder.start();
+            })
+                .catch((error) => {
+                console.error('Error starting screen recording:', error);
+            });
+        }
+        else {
+            console.error('Screen recording is not supported in this browser.');
+        }
+    }
+    stopScreenRecording() {
+        if (this.screenRecorder) {
+            this.screenRecorder.stop();
+            if (this.screenRecording) {
+                this.screenRecording.getTracks().forEach(track => track.stop());
+            }
+        }
     }
     handleMouseMove(event) {
         const eventData = {
