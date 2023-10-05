@@ -17,6 +17,7 @@ export class Devices{
     soundDevices: IDeviceList = {};
 
     devicesVueObject: any; 
+    meetingAdmin: boolean = false;
 
     constructor(app: App){
         this.app = app;

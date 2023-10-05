@@ -14,7 +14,7 @@
     
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.1/socket.io.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12"></script>
-        <script src="assets/bundle.js?v=1692863044452"></script> 
+        <script src="assets/bundle.js?v=1696535421765"></script> 
 
     </head>
     <body>
@@ -51,6 +51,12 @@
                     </div>
                     <div class="row center-xs" id="footer">
                         <div class="col-xs-12" id="controls">
+                            <span id="callRecordBtn" class="record fas fa-record-vinyl"></span>
+                            <!-- <button id="recordMedia">Start Recording</button> -->
+
+                            <!-- <span id="recordButton" class="record fas fa-record-vinyl"></span>
+                            <span v-on:click="toggleRecording" v-bind:class="{'recording': isRecording}" class="record fas fa-record-vinyl"></span> -->
+
                             <span v-on:click="toogleMicrophone" v-bind:class="{'fa-microphone': microphoneOn, 'fa-microphone-slash': !microphoneOn}" class="microphone fas fa-microphone"></span>
                             <span v-on:click="toogleCamera" v-bind:class="{'fa-video': cameraOn, 'fa-video-slash': !cameraOn}" class="camera fas fa-video"></span>
                             <span v-on:click="toogleScreen" v-bind:class="{'screenon': screenOn, 'disabled': screenSharingNotAllowed}" class="screen fas fa-desktop"></span>

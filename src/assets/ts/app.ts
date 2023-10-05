@@ -4,7 +4,6 @@ import '../images/chat.png';
 import config from "../../config.json"
 
 import { IExchange } from "./Exchange/IExchange";
-// import { Firebase } from "./Exchange/Firebase";
 import { ICommunication } from "./Communication/ICommunication";
 import { WebRTC } from "./Communication/WebRTC";
 import { IPartner } from "./Partner/IPartner";
@@ -32,7 +31,7 @@ import { IceServers } from "./Utils/IceServers";
 import { Sounds } from "./Utils/Sounds";
 import { Settings } from "./Utils/Settings";
 import { ChatServer } from "./Exchange/ChatServer";
-
+import { Recorder } from "./Recorder";
 export class App{
 
     room: string;
@@ -67,6 +66,61 @@ export class App{
     yourVideoElement: Video;
     partnerListElement: PartnerListElement;
 
+    localRecorder?: Recorder;
+    remoteRecorder?: Recorder;
+    recording = false;
+
+    startRecording() {
+        console.log('Starting recording. Stream:', this.localStream);
+        if (!this.localStream) {
+            console.error("Local stream is not initialized. Cannot start recording.");
+            return;
+        }
+        this.localRecorder = new Recorder(this.localStream);
+    
+        // Assuming you have a reference to your remote partner's video element:
+        const partnerIds = Object.keys(this.partners);
+        if (partnerIds.length > 0) {
+            const firstPartnerId = partnerIds[0];
+            const remoteStream = this.partners[firstPartnerId].stream;  // assuming stream is directly accessible
+            this.remoteRecorder = new Recorder(remoteStream);
+    
+            this.localRecorder.start();
+            this.remoteRecorder.start();
+        }
+    }
+    
+    async stopRecordingAndSave() {
+        const localBlob = await this.localRecorder!.stop();
+        const remoteBlob = await this.remoteRecorder!.stop();
+    
+        // Save blobs to files
+        this.saveBlob(localBlob, "localRecording");
+        this.saveBlob(remoteBlob, "remoteRecording");
+    }
+    
+    private saveBlob(blob: Blob, filenamePrefix: string) {
+        console.log('savining :>> ', filenamePrefix,blob);
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const filename = `${filenamePrefix}_${timestamp}.webm`;
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+    }
+    
+    toggleRecording() {
+        if (this.recording) {
+            this.stopRecordingAndSave();
+        } else {
+            this.startRecording();
+        }
+        this.recording = !this.recording;
+        console.log('this.recording :>> ', this.recording);
+    }
+    
+
+
     constructor(){
         this.yourVideo = document.getElementById("yourVideo");
         this.yourVideoElement = new Video(document.getElementById("yourVideoArea"), null);
@@ -83,7 +137,7 @@ export class App{
         this.configuration = new Configuration(this);
         this.noInternet = new NoInternet(this);
         this.welcome = new Welcome(this);
-        this.videogrid = new Videogrid();
+        this.videogrid = new Videogrid(this.exchange);
         this.videogrid.init();
     }
 
@@ -100,7 +154,7 @@ export class App{
 
     openConnection(newRoom: boolean = false){
         if(!this.closed){
-            //console.log("Id: " + this.yourId + " Room: " + this.room);
+           // console.log("Id: " + this.yourId + " Room: " + this.room);
             document.title = this.room + " | " + document.title;
             this.welcome.openDialog(newRoom, this.yourName ? false : true);
 
@@ -124,14 +178,10 @@ export class App{
     }
 
     addExchange(){
-        if(Settings.getValue(config, "exchangeServices.service") == "chat-server"){
+         
             this.exchange = new ChatServer(this.room, this.yourId);
             app.exchange.addReadEvent(app.readMessage);
-        } else {
-            // this.exchange = new Firebase(this.room, this.yourId, function(){
-            //     app.exchange.addReadEvent(app.readMessage);
-            // });
-        }
+   
     }
 
     preloadElements(callback: () => void){
@@ -195,12 +245,6 @@ export class App{
     }
 
     readMessage(sender: number, dataroom: string, msg) {
-
-        if (msg.controlEvent !== undefined) {
-            // Interpret and execute control event on remote screen
-            // This is where you perform actions based on the received control event
-            this.executeControlEvent(msg.controlEvent);
-          }
         if(app !== undefined && !app.closed){
            // console.log("Exchange message from: " + sender)
            // console.log(msg)
@@ -236,44 +280,7 @@ export class App{
             }
         }
     }
-    //screen control
-    executeControlEvent(controlEvent) {
-        if (controlEvent.type === 'mousemove') {
-          this.moveMouse(controlEvent.clientX, controlEvent.clientY);
-        } else if (controlEvent.type === 'mousedown') {
-          this.simulateMouseDown(controlEvent.clientX, controlEvent.clientY, controlEvent.button);
-        } else if (controlEvent.type === 'mouseup') {
-          this.simulateMouseUp(controlEvent.clientX, controlEvent.clientY, controlEvent.button);
-        }
-        // ... Add more cases for other control event types ...
-      }
-
-      moveMouse(x, y) {
-        // Move the virtual cursor on the remote screen (example)
-        const cursor = document.getElementById('remoteCursor');
-        cursor.style.left = x + 'px';
-        cursor.style.top = y + 'px';
-      }
-
-      simulateMouseDown(x, y, button) {
-        // Simulate mouse down action on the remote screen (example)
-        // Create a new element or interact with existing elements
-        const newElement = document.createElement('div');
-        newElement.className = 'simulated-mouse-down';
-        newElement.style.left = x + 'px';
-        newElement.style.top = y + 'px';
-        newElement.textContent = 'Mouse Down';
-        document.body.appendChild(newElement);
-      }
-
-      simulateMouseUp(x, y, button) {
-        // Simulate mouse up action on the remote screen (example)
-        // Remove or update elements created during mouse down
-        const simulatedMouseDown = document.querySelector('.simulated-mouse-down');
-        if (simulatedMouseDown) {
-          simulatedMouseDown.textContent = 'Mouse Up';
-        }
-      }
+ 
 
     addPartner(partnerId: number){
         var cla = this;
@@ -472,39 +479,10 @@ $(function() {
     app = new App();
     app.run();
 
-    $(document).on('mousemove', function(event) {
-        if (app && app.exchange) {
-            app.handleMouseEvent('mousemove', event.clientX, event.clientY);
-        }
+    $(document).ready(function() {
+        $("#callRecordBtn").on('click', function() {
+            app.toggleRecording(); // Assuming 'app' is the instance of your App class
+        });
     });
 
-    $(document).on('mousedown', function(event) {
-        if (app && app.exchange) {
-            app.handleMouseEvent('mousedown', event.clientX, event.clientY, event.button);
-        }
-    });
-
-    $(document).on('mouseup', function(event) {
-        if (app && app.exchange) {
-            app.handleMouseEvent('mouseup', event.clientX, event.clientY, event.button);
-        }
-    });
-
-    $(document).on('keydown', function(event) {
-        if (app && app.exchange) {
-            app.handleKeyboardEvent('keydown', event.key, event.keyCode);
-        }
-    });
-
-    // $(document).on('keyup', function(event) {
-    //     if (app && app.exchange) {
-    //         app.handleKeyboardEvent('keyup', event.key, event.keyCode);
-    //     }
-    // });
-
-    // $(document).on('keypress', function(event) {
-    //     if (app && app.exchange) {
-    //         app.handleKeyboardEvent('keypress', event.key, event.keyCode);
-    //     }
-    // });
 });

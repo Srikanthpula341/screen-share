@@ -91,6 +91,7 @@ export class Partner implements IPartner{
             return "Gast" + this.id.toString();
             //return localStorage.getItem("nameId");
         }
+        return "Gast" + this.id.toString();
         return this.name;
     }
 
@@ -191,6 +192,11 @@ export class Partner implements IPartner{
         partner.addVideoElement();
         // @ts-ignore
         partner.videoElement.srcObject = stream;
+
+        if (stream.getAudioTracks().length) {
+            console.log('Received remote audio stream:', stream);
+        }
+        console.log('stream :>> ', stream);
         partner.gotTracks = true;
     };
 
@@ -292,8 +298,8 @@ export class Partner implements IPartner{
     }
 
     onMessage(message: any, partner: IPartner){
-        console.log("Communication message from " + partner.id)
-        console.log(message);
+        // console.log("Communication message from " + partner.id)
+        // console.log(message);
         if(message.type !== undefined && message.message !== undefined){
             if(message.type === partner.textchat.textchatMessageType){
                 partner.textchat.addNewPartnerMessageToChat(message.message, partner);
