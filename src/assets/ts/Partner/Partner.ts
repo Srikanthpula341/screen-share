@@ -187,12 +187,12 @@ export class Partner implements IPartner{
     onIceCandidate(candidate: any, partner: IPartner) {
         partner.exchange.sendMessage({'ice': candidate}, partner.id);
     };
-    
+    // @ts-ignore
     onAddTrack(stream: any, partner: IPartner) { 
+        console.log('stream :>> ', stream);
         partner.addVideoElement();
         // @ts-ignore
         partner.videoElement.srcObject = stream;
-
         if (stream.getAudioTracks().length) {
             console.log('Received remote audio stream:', stream);
         }

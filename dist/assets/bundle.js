@@ -607,6 +607,8 @@ class WebRTC {
         };
         // @ts-ignore
         pc.ontrack = function (event) {
+            //prateek
+            //@ts-ignore
             return cla.onaddtrackEvent(event.streams[0], cla.partner);
         };
         pc.oniceconnectionstatechange = function () {
@@ -2604,7 +2606,9 @@ class Partner {
         partner.exchange.sendMessage({ 'ice': candidate }, partner.id);
     }
     ;
+    // @ts-ignore
     onAddTrack(stream, partner) {
+        console.log('stream :>> ', stream);
         partner.addVideoElement();
         // @ts-ignore
         partner.videoElement.srcObject = stream;
@@ -2748,72 +2752,6 @@ class Partner {
             $('#video-item-' + this.id).removeClass("hide");
             this.videogrid.recalculateLayout();
         }
-    }
-}
-
-
-/***/ }),
-
-/***/ "./src/assets/ts/Recorder.ts":
-/*!***********************************!*\
-  !*** ./src/assets/ts/Recorder.ts ***!
-  \***********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "Recorder": () => (/* binding */ Recorder)
-/* harmony export */ });
-class Recorder {
-    constructor(stream) {
-        this.chunks = [];
-        console.log('Recorder constructor called');
-        // setTimeout(() => {
-        console.log('MediaStream :>> ', MediaStream);
-        if (!stream || !stream.getAudioTracks || stream.getAudioTracks().length === 0) {
-            console.error("Invalid stream passed to Recorder. Ensure it has audio tracks.");
-            return;
-        }
-        const audioStream = new MediaStream(stream.getAudioTracks());
-        console.log('Audio stream created:', audioStream);
-        this.stream = audioStream;
-        this.mediaRecorder = new MediaRecorder(audioStream);
-        console.log('audioStream checking:>> ', audioStream);
-        this.setupListeners();
-        // }, 5000);
-    }
-    setupListeners() {
-        console.log('Setting up listeners for the media recorder');
-        this.mediaRecorder.ondataavailable = (event) => {
-            if (event.data.size > 0) {
-                console.log('Data available from media recorder:', event.data);
-                this.chunks.push(event.data);
-            }
-        };
-        this.mediaRecorder.onstart = () => {
-            console.log('Media recorder started');
-        };
-        this.mediaRecorder.onstop = () => {
-            console.log('Media recorder stopped');
-        };
-        this.mediaRecorder.onerror = (event) => {
-            console.error('Media recorder error:', event);
-        };
-    }
-    start() {
-        console.log('Starting media recorder');
-        this.mediaRecorder.start();
-    }
-    stop() {
-        console.log('Stopping media recorder');
-        return new Promise((resolve) => {
-            this.mediaRecorder.onstop = () => {
-                const blob = new Blob(this.chunks, { type: 'video/webm' });
-                console.log('Media recorder stopped, resolving blob:', blob);
-                resolve(blob);
-            };
-            this.mediaRecorder.stop();
-        });
     }
 }
 
@@ -7040,17 +6978,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _Utils_IceServers__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ./Utils/IceServers */ "./src/assets/ts/Utils/IceServers.ts");
 /* harmony import */ var _Utils_Sounds__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ./Utils/Sounds */ "./src/assets/ts/Utils/Sounds.ts");
 /* harmony import */ var _Exchange_ChatServer__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ./Exchange/ChatServer */ "./src/assets/ts/Exchange/ChatServer.ts");
-/* harmony import */ var _Recorder__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ./Recorder */ "./src/assets/ts/Recorder.ts");
-var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-
 
 
 
@@ -7075,51 +7002,6 @@ var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argume
 
 
 class App {
-    startRecording() {
-        console.log('Starting recording. Stream:', this.localStream);
-        if (!this.localStream) {
-            console.error("Local stream is not initialized. Cannot start recording.");
-            return;
-        }
-        this.localRecorder = new _Recorder__WEBPACK_IMPORTED_MODULE_23__.Recorder(this.localStream);
-        // Assuming you have a reference to your remote partner's video element:
-        const partnerIds = Object.keys(this.partners);
-        if (partnerIds.length > 0) {
-            const firstPartnerId = partnerIds[0];
-            const remoteStream = this.partners[firstPartnerId].stream; // assuming stream is directly accessible
-            this.remoteRecorder = new _Recorder__WEBPACK_IMPORTED_MODULE_23__.Recorder(remoteStream);
-            this.localRecorder.start();
-            this.remoteRecorder.start();
-        }
-    }
-    stopRecordingAndSave() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const localBlob = yield this.localRecorder.stop();
-            const remoteBlob = yield this.remoteRecorder.stop();
-            // Save blobs to files
-            this.saveBlob(localBlob, "localRecording");
-            this.saveBlob(remoteBlob, "remoteRecording");
-        });
-    }
-    saveBlob(blob, filenamePrefix) {
-        console.log('savining :>> ', filenamePrefix, blob);
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const filename = `${filenamePrefix}_${timestamp}.webm`;
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        link.click();
-    }
-    toggleRecording() {
-        if (this.recording) {
-            this.stopRecordingAndSave();
-        }
-        else {
-            this.startRecording();
-        }
-        this.recording = !this.recording;
-        console.log('this.recording :>> ', this.recording);
-    }
     constructor() {
         this.yourId = Math.floor(Math.random() * 1000000000);
         this.listener = false;
@@ -7130,7 +7012,6 @@ class App {
         this.called = false;
         this.readyToCall = false;
         this.stateIsSet = false;
-        this.recording = false;
         this.yourVideo = document.getElementById("yourVideo");
         this.yourVideoElement = new _Elements_Video__WEBPACK_IMPORTED_MODULE_8__.Video(document.getElementById("yourVideoArea"), null);
         this.partnerListElement = new _Elements_PartnerListElement__WEBPACK_IMPORTED_MODULE_9__.PartnerListElement(null);
@@ -7281,6 +7162,8 @@ class App {
         this.partners[partnerId] = null;
         this.partners[partnerId] = new _Partner_Partner__WEBPACK_IMPORTED_MODULE_2__.Partner(partnerId, this.exchange, this.devices, this.textchat, this.videogrid, this.controls, this.partnerOnConnected, this.partnerOnConnectionClosed, this.partnerOnConnectionLosed);
         this.setStreamToPartner(this.partners[partnerId], true);
+        const remoteStream = this.partners[partnerId].stream;
+        console.log('remoteStream :>> ', remoteStream);
         this.videogrid.recalculateLayout();
         _Utils_Sounds__WEBPACK_IMPORTED_MODULE_21__.Sounds.playSound(_Utils_Sounds__WEBPACK_IMPORTED_MODULE_21__.Sounds.newpartnersound, this);
     }
@@ -7419,46 +7302,12 @@ class App {
             app.videogrid.recalculateLayout();
         });
     }
-    handleMouseMove(event) {
-        const eventData = {
-            type: 'mousemove',
-            clientX: event.clientX,
-            clientY: event.clientY
-        };
-        // console.log('eventData :>> ', eventData);
-        this.exchange.sendControlEvent(eventData);
-    }
-    handleMouseEvent(eventType, clientX, clientY, button) {
-        const eventData = {
-            type: eventType,
-            clientX: clientX,
-            clientY: clientY,
-            button: button
-        };
-        //console.log('eventData:', eventData);
-        //this.exchange.sendControlEvent(eventData);
-    }
-    handleKeyboardEvent(eventType, key, keyCode) {
-        const eventData = {
-            type: eventType,
-            key: key,
-            keyCode: keyCode
-        };
-        console.log('eventData:', eventData);
-        this.exchange.sendControlEvent(eventData);
-        //this.exchange
-    }
 }
 var app = null;
 $(function () {
     _Utils_Translator__WEBPACK_IMPORTED_MODULE_19__.Translator.setTranslationsInHTML();
     app = new App();
     app.run();
-    $(document).ready(function () {
-        $("#callRecordBtn").on('click', function () {
-            app.toggleRecording(); // Assuming 'app' is the instance of your App class
-        });
-    });
 });
 
 })();

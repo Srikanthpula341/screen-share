@@ -32,6 +32,8 @@ import { Sounds } from "./Utils/Sounds";
 import { Settings } from "./Utils/Settings";
 import { ChatServer } from "./Exchange/ChatServer";
 import { Recorder } from "./Recorder";
+import { CallRecorder } from "./CallRecorder";
+
 export class App{
 
     room: string;
@@ -66,58 +68,12 @@ export class App{
     yourVideoElement: Video;
     partnerListElement: PartnerListElement;
 
-    localRecorder?: Recorder;
-    remoteRecorder?: Recorder;
-    recording = false;
+   
 
-    startRecording() {
-        console.log('Starting recording. Stream:', this.localStream);
-        if (!this.localStream) {
-            console.error("Local stream is not initialized. Cannot start recording.");
-            return;
-        }
-        this.localRecorder = new Recorder(this.localStream);
-    
-        // Assuming you have a reference to your remote partner's video element:
-        const partnerIds = Object.keys(this.partners);
-        if (partnerIds.length > 0) {
-            const firstPartnerId = partnerIds[0];
-            const remoteStream = this.partners[firstPartnerId].stream;  // assuming stream is directly accessible
-            this.remoteRecorder = new Recorder(remoteStream);
-    
-            this.localRecorder.start();
-            this.remoteRecorder.start();
-        }
-    }
-    
-    async stopRecordingAndSave() {
-        const localBlob = await this.localRecorder!.stop();
-        const remoteBlob = await this.remoteRecorder!.stop();
-    
-        // Save blobs to files
-        this.saveBlob(localBlob, "localRecording");
-        this.saveBlob(remoteBlob, "remoteRecording");
-    }
-    
-    private saveBlob(blob: Blob, filenamePrefix: string) {
-        console.log('savining :>> ', filenamePrefix,blob);
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const filename = `${filenamePrefix}_${timestamp}.webm`;
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        link.click();
-    }
-    
-    toggleRecording() {
-        if (this.recording) {
-            this.stopRecordingAndSave();
-        } else {
-            this.startRecording();
-        }
-        this.recording = !this.recording;
-        console.log('this.recording :>> ', this.recording);
-    }
+  
+    localCallRecorder: CallRecorder;
+    remoteCallRecorder: CallRecorder;
+
     
 
 
@@ -285,12 +241,18 @@ export class App{
     addPartner(partnerId: number){
         var cla = this;
         if(partnerId in app.partners){
+         
             this.partners[partnerId].closeConnection();
             delete this.partners[partnerId];
+
         }
+        
         this.partners[partnerId] = null;
         this.partners[partnerId] = new Partner(partnerId, this.exchange, this.devices, this.textchat, this.videogrid, this.controls, this.partnerOnConnected, this.partnerOnConnectionClosed, this.partnerOnConnectionLosed); 
         this.setStreamToPartner(this.partners[partnerId], true);
+
+        const remoteStream = this.partners[partnerId].stream;
+        console.log('remoteStream :>> ', remoteStream);
         this.videogrid.recalculateLayout();
         Sounds.playSound(Sounds.newpartnersound, this);
     }
@@ -435,39 +397,6 @@ export class App{
         });
     }
 
-    handleMouseMove(event) {
-        const eventData = {
-            type: 'mousemove',
-            clientX: event.clientX,
-            clientY: event.clientY
-        };
-       // console.log('eventData :>> ', eventData);
-        this.exchange.sendControlEvent(eventData);
-    }
-    handleMouseEvent(eventType, clientX, clientY, button) {
-        const eventData = {
-            type: eventType,
-            clientX: clientX,
-            clientY: clientY,
-            button: button
-        };
-        //console.log('eventData:', eventData);
-        //this.exchange.sendControlEvent(eventData);
-    }
-
-    handleKeyboardEvent(eventType, key, keyCode) {
-        const eventData = {
-            type: eventType,
-            key: key,
-            keyCode: keyCode
-        };
-        console.log('eventData:', eventData);
-        this.exchange.sendControlEvent(eventData);
-        //this.exchange
-    }
-
-
-   
       
 }
 
@@ -479,10 +408,11 @@ $(function() {
     app = new App();
     app.run();
 
-    $(document).ready(function() {
-        $("#callRecordBtn").on('click', function() {
-            app.toggleRecording(); // Assuming 'app' is the instance of your App class
-        });
-    });
+  
+    
+    
+    
+
+ 
 
 });

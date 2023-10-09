@@ -35,6 +35,9 @@ export class WebRTC implements ICommunication{
         };
         // @ts-ignore
         pc.ontrack = function(event) { 
+
+            //prateek
+            //@ts-ignore
             return cla.onaddtrackEvent(event.streams[0], cla.partner);
         };
         pc.oniceconnectionstatechange = function() {
